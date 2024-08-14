@@ -6,10 +6,14 @@ var app = express();
 var port = 7000;
 
 app.use(cors());
-// List of possible requests
-// GET /modes
-// GET /lines
-// GET /lines/:id
+
+function clean(name) {
+    return name.toLowerCase()
+               .normalize('NFD')
+               .replace(/[\u0300-\u036f]/g, '')
+               .replace(/[^a-z0-9]/g, '');
+}
+
 
 app.get('/modes', async (req, res) => {
     console.log('GET /modes');
@@ -48,8 +52,30 @@ app.get('/lines/:id', async (req, res) => {
     console.log('GET /lines/:id');
     const resp = await db.query('SELECT * FROM lines WHERE id = $1', [req.params.id]);
     res.json(resp.rows[0]);
-}); 
+});
+
+app.get('/stops/:lineid', async (req, res) => {
+    console.log('GET /stops/:lineid');
+    const output = {};
+    const resp = await db.query('SELECT * FROM stops WHERE lineid = $1', [req.params.lineid]);
+    const cleaned = [];
+    resp.rows.forEach(element => {
+        if(!output[element.name] && !cleaned.includes(clean(element.name))){
+            output[element.name] = [element.id];
+            cleaned.push(clean(element.name));
+        } else {
+            Object.keys(output).forEach(key => {
+                if(clean(key) == clean(element.name)){
+                    output[key].push(element.id);
+                }
+            });
+        }
+    });
+    res.json(output);
+});
 
 app.listen(port, ()=>{
     console.log("Port " + port + " ouvert !")
 });
+
+// Push pas encore, il faut que tu réorganise les stops avec les noms clean comme ça tas un truc {"stopname" : [stopid1, stopid2, stopid3] si yen a plusieurs sinon tu mets le truc seul}
