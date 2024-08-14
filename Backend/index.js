@@ -77,5 +77,3 @@ app.get('/stops/:lineid', async (req, res) => {
 app.listen(port, ()=>{
     console.log("Port " + port + " ouvert !")
 });
-
-// Push pas encore, il faut que tu réorganise les stops avec les noms clean comme ça tas un truc {"stopname" : [stopid1, stopid2, stopid3] si yen a plusieurs sinon tu mets le truc seul}
