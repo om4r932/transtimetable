@@ -74,6 +74,41 @@ app.get('/stops/:lineid', async (req, res) => {
     res.json(output);
 });
 
+
+app.get('/nextStop/:stopid/:lineid', async (req, res) => {
+    console.log('GET /nextStop/:lineid/:stopid');
+    var stopid = "";
+    if(req.params.stopid.includes("SP")){
+        stopid = "STIF:StopArea:" + req.params.stopid + ":"
+        console.log("A")
+    } else {
+        stopid = "STIF:StopPoint:" + req.params.stopid + ":"
+        console.log("B")
+    }
+
+    var resp = null;
+    if(req.params.lineid != "0"){
+        var lineid = "STIF:Line::" + req.params.lineid + ":";
+        resp = await fetch('https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=' + stopid + '&LineRef=' + lineid, {
+            headers: {
+                accept: "application/json",
+                apiKey: process.env.IDFM_TOKEN
+            }
+        });
+    } else {
+        resp = await fetch('https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=' + stopid, {
+            headers: {
+                accept: "application/json",
+                apiKey: process.env.IDFM_TOKEN
+            }
+        });
+    }
+    
+    console.log(stopid);
+    const data = await resp.json();
+    res.json(data);
+});
+
 app.listen(port, ()=>{
     console.log("Port " + port + " ouvert !")
 });
