@@ -5,6 +5,7 @@ import db from './db.js';
 var app = express();
 var port = 7000;
 
+app.use(express.static('public'));
 app.use(cors());
 
 function clean(name) {
@@ -14,44 +15,34 @@ function clean(name) {
                .replace(/[^a-z0-9]/g, '');
 }
 
+function removeCity(name) {
+    return name.replace(/\s*\(.*?\)\s*/g, '').trim();
+}
+
+function getOnlyCity(name) {
+    return name.match(/\(.*?\)/g)[0];
+}
 
 app.get('/modes', async (req, res) => {
     console.log('GET /modes');
     const output = {};
     const resp = await db.query('SELECT * FROM modes');
     resp.rows.forEach(element => {
-       output[element.key] = element.value; 
+       output[element.id] = element.name; 
     });
     res.json(output);
 });
 
-app.get('/lines', async (req, res) => {
-    console.log('GET /lines');
-    const output = {};
-    const resp = await db.query('SELECT * FROM lines');
+app.get('/operators/:mode', async (req, res) => {
+    console.log('GET /operators/:mode');
+    const output = [];
+    const resp = await db.query('SELECT operator FROM lines WHERE mode = $1', [req.params.mode]);
     resp.rows.forEach(element => {
-        if(!output[element.mode]){
-            output[element.mode] = {};
-            if(!output[element.mode][element.operator]){
-                output[element.mode][element.operator] = {};
-                output[element.mode][element.operator][element.id] = element.name;
-            }
-        } else {
-            if(!output[element.mode][element.operator]){
-                output[element.mode][element.operator] = {};
-                output[element.mode][element.operator][element.id] = element.name;
-            } else {
-                output[element.mode][element.operator][element.id] = element.name;
-            }
+        if(!output.includes(element.operator)){
+            output.push(element.operator);
         }
     });
     res.json(output);
-});
-
-app.get('/lines/:id', async (req, res) => {
-    console.log('GET /lines/:id');
-    const resp = await db.query('SELECT * FROM lines WHERE id = $1', [req.params.id]);
-    res.json(resp.rows[0]);
 });
 
 app.get('/stops/:lineid', async (req, res) => {
@@ -59,13 +50,18 @@ app.get('/stops/:lineid', async (req, res) => {
     const output = {};
     const resp = await db.query('SELECT * FROM stops WHERE lineid = $1', [req.params.lineid]);
     const cleaned = [];
+    const cities = [];
     resp.rows.forEach(element => {
-        if(!output[element.name] && !cleaned.includes(clean(element.name))){
-            output[element.name] = [element.id];
-            cleaned.push(clean(element.name));
+        var name = element.name + " (" + element.city + ")";
+        var nameWithout = element.name;
+        var cleanedName = clean(nameWithout);
+        if (!output[name] && !cleaned.some(c => (cleanedName.includes(c) || c.includes(cleanedName)) && getOnlyCity(name) === getOnlyCity(c + cities[cleaned.indexOf(c)]))) {
+            output[name] = [element.id];
+            cleaned.push(cleanedName);
+            cities.push(getOnlyCity(name));
         } else {
             Object.keys(output).forEach(key => {
-                if(clean(key) == clean(element.name)){
+                if ((cleanedName.includes(clean(removeCity(key))) || clean(removeCity(key)).includes(cleanedName)) && getOnlyCity(key) == getOnlyCity(name)) {
                     output[key].push(element.id);
                 }
             });
@@ -73,7 +69,15 @@ app.get('/stops/:lineid', async (req, res) => {
     });
     res.json(output);
 });
-
+// app.get('/lines/:mode/:operator', async (req, res) => {
+//     console.log('GET /lines');
+//     const output = {};
+//     const resp = await db.query('SELECT * FROM lines WHERE mode = $1 AND operator = $2', [req.params.mode, req.params.operator]);
+//     resp.rows.forEach(element => {
+//         output[element.id] = element.name;
+//     });
+//     res.json(output);
+// });
 
 app.get('/nextStop/:stopid/:lineid', async (req, res) => {
     console.log('GET /nextStop/:lineid/:stopid');
