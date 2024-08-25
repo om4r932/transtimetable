@@ -69,18 +69,20 @@ app.get('/stops/:lineid', async (req, res) => {
     });
     res.json(output);
 });
-// app.get('/lines/:mode/:operator', async (req, res) => {
-//     console.log('GET /lines');
-//     const output = {};
-//     const resp = await db.query('SELECT * FROM lines WHERE mode = $1 AND operator = $2', [req.params.mode, req.params.operator]);
-//     resp.rows.forEach(element => {
-//         output[element.id] = element.name;
-//     });
-//     res.json(output);
-// });
+
+app.get('/lines/:mode/:operator', async (req, res) => {
+    console.log('GET /lines');
+    const output = {};
+    const resp = await db.query('SELECT * FROM lines WHERE mode = $1 AND operator = $2', [req.params.mode, req.params.operator]);
+    resp.rows.forEach(element => {
+        output[element.id] = element.name;
+    });
+    res.json(output);
+});
 
 app.get('/nextStop/:stopid/:lineid', async (req, res) => {
     console.log('GET /nextStop/:lineid/:stopid');
+    
     var stopid = "";
     if(req.params.stopid.includes("SP")){
         stopid = "STIF:StopArea:" + req.params.stopid + ":"
@@ -108,9 +110,24 @@ app.get('/nextStop/:stopid/:lineid', async (req, res) => {
         });
     }
     
-    console.log(stopid);
     const data = await resp.json();
-    res.json(data);
+    // Récupération du temps restant entre maintenant et le temps de passage du prochain transport
+    var string = ""
+    var now = new Date();
+    var nextStopList = data.Siri.ServiceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+    for(const hour of nextStopList){
+        var nextStop = hour.MonitoredVehicleJourney.MonitoredCall.ExpectedDepartureTime;
+        var nextStopDate = new Date(nextStop);
+        var diff = nextStopDate - now;
+        var diffMinutes = Math.floor(diff / 60000);
+        var diffHours = Math.floor(diffMinutes / 60);
+        diffMinutes = diffMinutes % 60;
+        var diffSeconds = Math.floor(diff / 1000);
+        diffSeconds = diffSeconds % 60;
+        var diffString = diffHours + "h " + diffMinutes + "m " + diffSeconds + "s";
+        string += "[" + hour.MonitoredVehicleJourney.DirectionName[0].value + "] " + diffString + "<br>";
+    }
+    res.send(string);
 });
 
 app.listen(port, ()=>{

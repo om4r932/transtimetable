@@ -7,7 +7,31 @@
     <title>Accueil</title>
 </head>
 <body>
-    <form action="http://" method="get"></form>
+    <form id="transportForm">
+        <label for="mode">Mode:</label>
+        <select id="mode" name="mode" disabled>
+            <option value="">Sélectionnez un mode</option>
+        </select><br>
+
+        <label for="operator">Opérateur:</label>
+        <select id="operator" name="operator" disabled>
+            <option value="">Sélectionnez un opérateur</option>
+        </select><br>
+
+        <label for="line">Ligne:</label>
+        <select id="line" name="line" disabled>
+            <option value="">Sélectionnez une ligne</option>
+        </select><br>
+
+        <label for="stop">Arrêt:</label>
+        <select id="stop" name="stop" disabled>
+            <option value="">Sélectionnez un arrêt</option>
+        </select><br>
+
+        <button type="submit">Valider</button>
+    </form>
+    <!-- Output -->
+    <p id="output"></p>
     <script type="module" src="script.js"></script>
 </body>
 </html>
