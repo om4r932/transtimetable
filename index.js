@@ -80,6 +80,40 @@ app.get('/lines/:mode/:operator', async (req, res) => {
     res.json(output);
 });
 
+app.get('/nextStop/:stopid/:lineid/debug', async (req,res) => {
+    console.log('GET /nextStop/:lineid/:stopid');
+    
+    var stopid = "";
+    if(req.params.stopid.includes("SP")){
+        stopid = "STIF:StopArea:" + req.params.stopid + ":"
+        console.log("A")
+    } else {
+        stopid = "STIF:StopPoint:" + req.params.stopid + ":"
+        console.log("B")
+    }
+
+    var resp = null;
+    if(req.params.lineid != "0"){
+        var lineid = "STIF:Line::" + req.params.lineid + ":";
+        resp = await fetch('https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=' + stopid + '&LineRef=' + lineid, {
+            headers: {
+                accept: "application/json",
+                apiKey: process.env.IDFM_TOKEN
+            }
+        });
+    } else {
+        resp = await fetch('https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=' + stopid, {
+            headers: {
+                accept: "application/json",
+                apiKey: process.env.IDFM_TOKEN
+            }
+        });
+    }
+    
+    const data = await resp.json();
+    res.json(data);
+})
+
 app.get('/nextStop/:stopid/:lineid', async (req, res) => {
     console.log('GET /nextStop/:lineid/:stopid');
     
@@ -115,8 +149,16 @@ app.get('/nextStop/:stopid/:lineid', async (req, res) => {
     var string = ""
     var now = new Date();
     var nextStopList = data.Siri.ServiceDelivery.StopMonitoringDelivery[0].MonitoredStopVisit;
+    if(typeof nextStopList == "undefined"){
+        res.send("Erreur !");
+    }
     for(const hour of nextStopList){
-        var nextStop = hour.MonitoredVehicleJourney.MonitoredCall.ExpectedDepartureTime;
+        var nextStop = "";
+        if(hour.MonitoredVehicleJourney.MonitoredCall.ExpectedArrivalTime == null){
+            nextStop = hour.MonitoredVehicleJourney.MonitoredCall.ExpectedDepartureTime;
+        } else {
+            nextStop = hour.MonitoredVehicleJourney.MonitoredCall.ExpectedArrivalTime;
+        }
         var nextStopDate = new Date(nextStop);
         var diff = nextStopDate - now;
         var diffMinutes = Math.floor(diff / 60000);
@@ -125,7 +167,10 @@ app.get('/nextStop/:stopid/:lineid', async (req, res) => {
         var diffSeconds = Math.floor(diff / 1000);
         diffSeconds = diffSeconds % 60;
         var diffString = diffHours + "h " + diffMinutes + "m " + diffSeconds + "s";
-        string += "[" + hour.MonitoredVehicleJourney.DirectionName[0].value + "] " + diffString + "<br>";
+        string += "[" + hour.MonitoredVehicleJourney.DestinationName[0].value + "] " + diffString + "<br>";
+    }
+    if(string === ""){
+        string = "Erreur !";
     }
     res.send(string);
 });
