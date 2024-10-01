@@ -6,7 +6,7 @@ Ce projet consiste en un back-end codé avec Express.js permettant de récupére
 
 ## API Externes
 
-Ce back-end utilise principalement l'API PRIM d'Île-de-France Mobilités : [Documentation de l'API PRIM](https://prim.iledefrance-mobilites.fr). D'autres API seront intégrées pour couvrir certains transports, tels que les Transiliens et certains tramways sous la SNCF.
+Ce back-end utilise principalement l'API PRIM d'Île-de-France Mobilités : [Documentation de l'API PRIM](https://prim.iledefrance-mobilites.fr). D'autres API seront intégrées pour couvrir certains transports, tels que les Transiliens et les transports géré par la SNCF.
 
 ## Objectifs du Projet
 
@@ -16,9 +16,9 @@ Ce projet personnel a pour but de me familiariser avec l'utilisation des API ext
 
 Vous pouvez tester l'API de deux manières :
 
-1. **Interface Web** : [Site Web de Test](about://blank) (site web à venir).
+1. **Interface Web** : Vous pouvez tester ma backend via mon site Web [ici](https://idfm.om4r932.fr).
 
-2. **Hébergement Local** : Si vous souhaitez héberger l'API localement, assurez-vous d'avoir Node.js et un serveur PostgreSQL installés. Voici les étapes :
+2. **Hébergement Local** : Si vous souhaitez héberger l'API localement, assurez-vous d'avoir [NodeJS](https://nodejs.org) et un serveur [PostgreSQL](https://www.postgresql.org) installé. Voici les étapes :
 
 ### Variables d'Environnement (.env)
 
